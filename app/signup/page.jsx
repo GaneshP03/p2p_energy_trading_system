@@ -1,13 +1,51 @@
-import React from "react";
+"use client";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation"; // Ensure this matches your router setup
+import Link from "next/link";
 
 const SignUpPage = () => {
+  const router = useRouter();
+  const [user, setUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
+  const [buttonDisabled, setButtonDisabled] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const onSignup = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const res = await axios.post("/api/users/signup", user);
+      toast.success("Signup success");
+      await router.push("/login"); // Ensure this is awaited
+    } catch (error) {
+      console.log("Something went wrong");
+      toast.error(error.response?.data || "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user.email && user.password && user.username) {
+      setButtonDisabled(false);
+    } else {
+      setButtonDisabled(true);
+    }
+  }, [user]);
+
   return (
     <div className="bg-gray-100 flex items-center justify-center min-h-screen">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Sign Up
+          {loading ? "Processing..." : "Sign Up"}
         </h2>
-        <form>
+        <form onSubmit={onSignup}>
           <div className="mb-4">
             <label
               htmlFor="username"
@@ -19,6 +57,9 @@ const SignUpPage = () => {
               type="text"
               id="username"
               className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-zinc-500 focus:outline-none"
+              value={user.username}
+              onChange={(e) => setUser({ ...user, username: e.target.value })}
+              placeholder="User Name"
             />
           </div>
           <div className="mb-4">
@@ -32,6 +73,9 @@ const SignUpPage = () => {
               type="email"
               id="email"
               className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-zinc-500 focus:outline-none"
+              value={user.email}
+              onChange={(e) => setUser({ ...user, email: e.target.value })}
+              placeholder="Email"
             />
           </div>
           <div className="mb-4">
@@ -45,15 +89,29 @@ const SignUpPage = () => {
               type="password"
               id="password"
               className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-zinc-500 focus:outline-none"
+              value={user.password}
+              onChange={(e) => setUser({ ...user, password: e.target.value })}
+              placeholder="Password"
             />
           </div>
-          <div className="mb-6"></div>
           <button
             type="submit"
-            className="w-full border-2 border-black bg-black text-white py-2 rounded-lg hover:bg-white hover:text-black transition"
+            disabled={buttonDisabled || loading}
+            className={`w-full border-2 ${
+              buttonDisabled || loading
+                ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                : "bg-black text-white hover:bg-white hover:text-black"
+            } py-2 rounded-lg transition`}
           >
-            Sign Up
+            {buttonDisabled
+              ? "Please fill all fields"
+              : loading
+              ? "Processing..."
+              : "Sign Up"}
           </button>
+          <Link href="/login" className="block text-center mt-4 text-gray-600">
+            Already a user? Log in
+          </Link>
         </form>
       </div>
     </div>
